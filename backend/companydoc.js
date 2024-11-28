@@ -7,7 +7,7 @@ const multer = require('multer');
 const router = express.Router();
 
 // Define File Schema
-const FileSchema = new mongoose.Schema({
+const CompanyDocSchema = new mongoose.Schema({
     clientName: { type: mongoose.Schema.Types.ObjectId, ref: 'Client', required: true },
     userType: { type: mongoose.Schema.Types.ObjectId, ref: 'UserType', required: true },
     fileName: { type: String, required: true },
@@ -15,12 +15,12 @@ const FileSchema = new mongoose.Schema({
     uploadDate: { type: Date, default: Date.now },
 });
 
-const File = mongoose.model('File', FileSchema);
+const CompanyDoc = mongoose.model('CompanyDoc', CompanyDocSchema);
 
 // Multer configuration
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadDir = path.join(__dirname, 'uploads');
+        const uploadDir = path.join(__dirname, 'Docuploads');
         if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
         }
@@ -32,12 +32,10 @@ const storage = multer.diskStorage({
     }
 });
 
-
-
 const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
 // POST route to upload a file
-router.post('/upload', upload.single('file'), async (req, res) => {
+router.post('/docupload', upload.single('file'), async (req, res) => {
   if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
   }
@@ -48,7 +46,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
   }
 
-  const newFile = new File({
+  const newFile = new CompanyDoc({
       fileName: req.file.filename,
       clientName,
       userType,
@@ -67,11 +65,10 @@ router.post('/upload', upload.single('file'), async (req, res) => {
   }
 });
 
-
 // GET route to fetch all uploaded files
-router.get('/files', async (req, res) => {
+router.get('/docfiles', async (req, res) => {
     try {
-        const files = await File.find()
+        const files = await CompanyDoc.find()
             .populate('clientName')
             .populate('userType')
             .populate('fileType');
@@ -86,7 +83,7 @@ router.get('/files', async (req, res) => {
 router.put('/:id', async (req, res) => {
     try {
         const { clientName, userType, fileType } = req.body;
-        const updatedFile = await File.findByIdAndUpdate(req.params.id, {
+        const updatedFile = await CompanyDoc.findByIdAndUpdate(req.params.id, {
             clientName,
             userType,
             fileType,
@@ -102,40 +99,40 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// delete a file
-router.delete('/deletefile/:fileName', async (req, res) => {
+// DELETE route to delete a file
+router.delete('/docdeletefile/:fileName', async (req, res) => {
   const { fileName } = req.params; 
 
   try {
-    const fileToDelete = await File.findOne({ fileName }); 
+    const fileToDelete = await CompanyDoc.findOne({ fileName }); 
     if (!fileToDelete) {
       return res.status(404).json({ error: 'File not found' }); 
     }
 
-    const filePath = path.join(__dirname, 'uploads', fileToDelete.fileName); 
+    const filePath = path.join(__dirname, 'Docuploads', fileToDelete.fileName); 
     await fs.promises.unlink(filePath); 
 
-    await File.deleteOne({ fileName }); 
+    await CompanyDoc.deleteOne({ fileName }); 
     res.status(200).json({ message: 'File deleted successfully' });
   } catch (error) {
-    console.error('Error deleting file:', error); // Log the error
+    console.error('Error deleting file:', error); 
     res.status(500).json({ error: 'Failed to delete file', details: error.message }); 
   }
 });
 
-// get a file data
-router.get('/download/:id', async (req, res) => {
+// GET route to download a file
+router.get('/docdownload/:id', async (req, res) => {
   const { id } = req.params;
 
   try {
     // Find the file by id
-    const fileToDownload = await File.findById(id);
+    const fileToDownload = await CompanyDoc.findById(id);
     if (!fileToDownload) {
       return res.status(404).json({ error: 'File not found' });
     }
 
     // Construct the file path
-    const filePath = path.join(__dirname, 'uploads', fileToDownload.fileName);
+    const filePath = path.join(__dirname, 'Docuploads', fileToDownload.fileName);
     if (fs.existsSync(filePath)) {
       // Send the file for download
       res.download(filePath, (err) => {
@@ -152,6 +149,5 @@ router.get('/download/:id', async (req, res) => {
     res.status(500).json({ error: 'Failed to download file', details: error.message });
   }
 });
-
 
 module.exports = router;

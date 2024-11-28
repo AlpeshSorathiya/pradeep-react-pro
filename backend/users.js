@@ -10,6 +10,7 @@ const router = express.Router();
 const UserSchema = new mongoose.Schema({
   clientName: { type: mongoose.Schema.Types.ObjectId,ref:'Client', required: true },
   userType: { type: mongoose.Schema.Types.ObjectId, ref :'UserType', required: true },
+  Name: { type: String, required: true },
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   fileType: [{ type: mongoose.Schema.Types.ObjectId, ref: 'FileType', required: true }],
@@ -39,9 +40,9 @@ router.get("/users", async (req, res) => {
 
 // Route to add a new user
 router.post("/users", async (req, res) => {
-  const { clientName, userType, username, password, fileType } = req.body;
+  const { clientName, userType,Name, username, password, fileType } = req.body;
 
-  if (!clientName || !userType || !username || !password || !fileType) {
+  if (!clientName || !userType || !username || !password || !fileType || !Name) {
     return res
       .status(400)
       .json({ error: "All fields including fileType are required" });
@@ -51,6 +52,7 @@ router.post("/users", async (req, res) => {
   const newUser = new User({
     clientName,
     userType,
+    Name,
     username,
     password,
     fileType, 
@@ -71,7 +73,7 @@ router.post("/users", async (req, res) => {
 // Route to update a user
 router.put("/users/:id", async (req, res) => {
   const { id } = req.params;
-  const { clientName, username, userType, password, fileType } = req.body;
+  const { clientName, username,Name, userType, password, fileType } = req.body;
 
   if (!clientName || !userType || !password || !username) {
     return res
@@ -83,6 +85,7 @@ router.put("/users/:id", async (req, res) => {
   let updatedFields = {
     clientName,
     username,
+    Name,
     userType,
     fileType,
   };
@@ -153,6 +156,7 @@ router.post("/login", async (req, res) => {
     const token = jwt.sign(
       {
         id: userFound._id,
+        Name:userFound.Name,
         username: userFound.username,
         userType: userFound.userType.userType,
         clientName: userFound.clientName.clientName,

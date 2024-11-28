@@ -4,29 +4,58 @@ const mongoose = require("mongoose");
 const router = express.Router();
 
 const ClientSchema = new mongoose.Schema({
+  FederalId: { type: String, required: true },
+  StateId: { type: String, required: true },
+  CompanyName: { type: String, required: true },
   clientName: { type: String, required: true },
   address: { type: String, required: true },
   email: { type: String, required: true },
   phoneNumber: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now },
+  NoOfEmployes: { type: Number, required: true },
+  StartDate: {type:Date ,required:true},
 });
 
 const Client = mongoose.model("Client", ClientSchema);
 
 // Route to add a new client with validation
 router.post("/clients", async (req, res) => {
-  const { clientName, address, email, phoneNumber } = req.body;
-
-  // Validation: Check if fields are provided
-  if (!clientName || !address || !email || !phoneNumber) {
-    return res.status(400).json({ error: "All fields are required" });
-  }
-
-  const newClient = new Client({
+  const {
+    FederalId,
+    StateId,
+    CompanyName,
     clientName,
     address,
     email,
     phoneNumber,
+    NoOfEmployes,
+    StartDate,
+  } = req.body;
+
+  // Validation: Check if fields are provided
+  if (
+    !FederalId ||
+    !StateId ||
+    !CompanyName ||
+    !clientName ||
+    !address ||
+    !email ||
+    !phoneNumber ||
+    !NoOfEmployes ||
+    !StartDate
+  ) {
+    return res.status(400).json({ error: "All fields are required" });
+  }
+
+  const newClient = new Client({
+    FederalId,
+    StateId,
+    CompanyName,
+    clientName,
+    address,
+    email,
+    phoneNumber,
+    NoOfEmployes,
+    StartDate,
   });
 
   try {
@@ -53,21 +82,50 @@ router.get("/clients", async (req, res) => {
   }
 });
 
-
 // Route to update client information
 router.put("/clients/:id", async (req, res) => {
   const clientId = req.params.id;
-  const { clientName, address, email, phoneNumber } = req.body;
+  const {
+    FederalId,
+    StateId,
+    CompanyName,
+    clientName,
+    address,
+    email,
+    phoneNumber,
+    NoOfEmployes,
+    StartDate,
+  } = req.body;
 
   // Validation: Ensure fields are provided
-  if (!clientName || !address || !email || !phoneNumber) {
+  if (
+    !FederalId ||
+    !StateId ||
+    !CompanyName ||
+    !clientName ||
+    !address ||
+    !email ||
+    !phoneNumber ||
+    !NoOfEmployes ||
+    !StartDate
+  ) {
     return res.status(400).json({ error: "All fields are required" });
   }
 
   try {
     const updatedClient = await Client.findByIdAndUpdate(
       clientId,
-      { clientName, address, email, phoneNumber },
+      {
+        FederalId,
+        StateId,
+        CompanyName,
+        clientName,
+        address,
+        email,
+        phoneNumber,
+        NoOfEmployes,
+        StartDate,
+      },
       { new: true, runValidators: true } // Return the updated client and run schema validation
     );
 
