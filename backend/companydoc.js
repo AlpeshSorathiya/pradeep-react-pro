@@ -9,9 +9,7 @@ const router = express.Router();
 // Define File Schema
 const CompanyDocSchema = new mongoose.Schema({
     clientName: { type: mongoose.Schema.Types.ObjectId, ref: 'Client', required: true },
-    userType: { type: mongoose.Schema.Types.ObjectId, ref: 'UserType', required: true },
     fileName: { type: String, required: true },
-    fileType: [{ type: mongoose.Schema.Types.ObjectId, ref: 'FileType', required: true }],
     uploadDate: { type: Date, default: Date.now },
 });
 
@@ -40,17 +38,15 @@ router.post('/docupload', upload.single('file'), async (req, res) => {
       return res.status(400).json({ error: 'No file uploaded' });
   }
   
-  const { clientName, userType, fileType } = req.body;
+  const { clientName } = req.body;
 
-  if (!clientName || !userType || !fileType) {
+  if (!clientName) {
       return res.status(400).json({ error: 'Missing required fields' });
   }
 
   const newFile = new CompanyDoc({
       fileName: req.file.filename,
-      clientName,
-      userType,
-      fileType: fileType.split(','), // Ensure fileType is an array
+      clientName // Ensure fileType is an array
   });
 
   try {
@@ -70,8 +66,6 @@ router.get('/docfiles', async (req, res) => {
     try {
         const files = await CompanyDoc.find()
             .populate('clientName')
-            .populate('userType')
-            .populate('fileType');
         res.json(files);
     } catch (error) {
         console.error("Error fetching files:", error);
@@ -82,11 +76,9 @@ router.get('/docfiles', async (req, res) => {
 // PUT route to update a file's information
 router.put('/:id', async (req, res) => {
     try {
-        const { clientName, userType, fileType } = req.body;
+        const { clientName } = req.body;
         const updatedFile = await CompanyDoc.findByIdAndUpdate(req.params.id, {
-            clientName,
-            userType,
-            fileType,
+            clientName
         }, { new: true });
 
         if (!updatedFile) {

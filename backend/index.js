@@ -41,6 +41,7 @@ const clientRoutes = require("./clients");
 const userRoutes = require("./users");
 const fileUploadRoutes = require("./fileupload");
 const docsRoutes=require("./companydoc")
+const activityRoutes=require("./activity")
 
 app.use("/api", fileTypeRoutes);
 app.use("/api", userTypeRoutes);
@@ -48,6 +49,7 @@ app.use("/api", clientRoutes);
 app.use("/api", userRoutes);
 app.use("/api", fileUploadRoutes);
 app.use("/api", docsRoutes);
+app.use("/api",activityRoutes);
 
 // Server port
 const PORT = 3000;

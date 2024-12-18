@@ -52,7 +52,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
       fileName: req.file.filename,
       clientName,
       userType,
-      fileType: fileType.split(','), // Ensure fileType is an array
+      fileType: fileType.split(','), 
   });
 
   try {

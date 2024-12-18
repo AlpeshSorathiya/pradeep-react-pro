@@ -8,7 +8,7 @@ const router = express.Router();
 
 // User Schema
 const UserSchema = new mongoose.Schema({
-  clientName: { type: mongoose.Schema.Types.ObjectId,ref:'Client', required: true },
+  clientName: [{ type: mongoose.Schema.Types.ObjectId,ref:'Client', required: true }],
   userType: { type: mongoose.Schema.Types.ObjectId, ref :'UserType', required: true },
   Name: { type: String, required: true },
   username: { type: String, required: true, unique: true },
@@ -40,29 +40,27 @@ router.get("/users", async (req, res) => {
 
 // Route to add a new user
 router.post("/users", async (req, res) => {
-  const { clientName, userType,Name, username, password, fileType } = req.body;
+  const { clientName, userType, Name, username, password, fileType } = req.body;
 
   if (!clientName || !userType || !username || !password || !fileType || !Name) {
-    return res
-      .status(400)
-      .json({ error: "All fields including fileType are required" });
+    return res.status(400).json({ error: "All fields including fileType are required" });
   }
 
-  // Create a new user
+  // Ensure clientName is always an array
+  const normalizedClientName = Array.isArray(clientName) ? clientName : [clientName];
+
   const newUser = new User({
-    clientName,
+    clientName: normalizedClientName,
     userType,
     Name,
     username,
     password,
-    fileType, 
+    fileType,
   });
 
   try {
     await newUser.save();
-    res
-      .status(201)
-      .json({ message: "User added successfully", userId: newUser._id });
+    res.status(201).json({ message: "User added successfully", userId: newUser._id });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to add user" });
@@ -70,29 +68,29 @@ router.post("/users", async (req, res) => {
 });
 
 
+
 // Route to update a user
 router.put("/users/:id", async (req, res) => {
   const { id } = req.params;
-  const { clientName, username,Name, userType, password, fileType } = req.body;
+  const { clientName, username, Name, userType, password, fileType } = req.body;
 
-  if (!clientName || !userType || !password || !username) {
-    return res
-      .status(400)
-      .json({ error: "All fields except password are required" });
+  if (!clientName || !userType || !username || !Name) {
+    return res.status(400).json({ error: "All fields except password are required" });
   }
 
-  // Fields to be updated
+  // Ensure clientName is always an array
+  const normalizedClientName = Array.isArray(clientName) ? clientName : [clientName];
+
   let updatedFields = {
-    clientName,
+    clientName: normalizedClientName,
     username,
     Name,
     userType,
     fileType,
   };
 
-  // Update password if provided
   if (password) {
-    updatedFields.password = await password;
+    updatedFields.password = password; 
   }
 
   try {
@@ -105,14 +103,13 @@ router.put("/users/:id", async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    res
-      .status(200)
-      .json({ message: "User updated successfully", user: updatedUser });
+    res.status(200).json({ message: "User updated successfully", user: updatedUser });
   } catch (error) {
     console.error("Error updating user:", error);
     res.status(500).json({ error: "Failed to update user" });
   }
 });
+
 
 // Route to delete a user
 router.delete("/users/:id", async (req, res) => {
@@ -136,41 +133,38 @@ router.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
   try {
-    // Check if user exists
-    const user = await User.find().populate('clientName').populate('userType').populate('fileType');
-  
-    
-    const userFound = user.find(
-      (user) => user.username == username && user.password == password
+    const users = await User.find()
+      .populate('clientName')
+      .populate('userType')
+      .populate('fileType');
+
+    const userFound = users.find(
+      (user) => user.username === username && user.password === password
     );
 
     if (!userFound) {
       return res.status(400).json({ message: "Invalid username or password" });
     }
 
-    if (userFound.password !== password) {
-      return res.status(400).json({ message: "Invalid username or password" });
-    }
-    
-    
     const token = jwt.sign(
       {
         id: userFound._id,
-        Name:userFound.Name,
+        Name: userFound.Name,
         username: userFound.username,
         userType: userFound.userType.userType,
-        clientName: userFound.clientName.clientName,
+        clientName: userFound.clientName.map(client => client.clientName), // Map for array
         fileType: userFound.fileType.map(file => file.fileType),
       },
       "user",
       { expiresIn: "1h" }
     );
-    
+
     res.json({ message: "Login successful", token });
   } catch (error) {
-    console.error("Error during login:", error); 
-    res.status(500).json({ message: "Server error", error }); 
+    console.error("Error during login:", error);
+    res.status(500).json({ message: "Server error", error });
   }
 });
+
 
 module.exports = router;

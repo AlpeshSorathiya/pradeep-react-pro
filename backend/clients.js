@@ -6,7 +6,6 @@ const router = express.Router();
 const ClientSchema = new mongoose.Schema({
   FederalId: { type: String, required: true },
   StateId: { type: String, required: true },
-  CompanyName: { type: String, required: true },
   clientName: { type: String, required: true },
   address: { type: String, required: true },
   email: { type: String, required: true },
@@ -22,7 +21,6 @@ router.post("/clients", async (req, res) => {
   const {
     FederalId,
     StateId,
-    CompanyName,
     clientName,
     address,
     email,
@@ -35,7 +33,6 @@ router.post("/clients", async (req, res) => {
   if (
     !FederalId ||
     !StateId ||
-    !CompanyName ||
     !clientName ||
     !address ||
     !email ||
@@ -49,7 +46,6 @@ router.post("/clients", async (req, res) => {
   const newClient = new Client({
     FederalId,
     StateId,
-    CompanyName,
     clientName,
     address,
     email,
@@ -88,7 +84,6 @@ router.put("/clients/:id", async (req, res) => {
   const {
     FederalId,
     StateId,
-    CompanyName,
     clientName,
     address,
     email,
@@ -101,7 +96,6 @@ router.put("/clients/:id", async (req, res) => {
   if (
     !FederalId ||
     !StateId ||
-    !CompanyName ||
     !clientName ||
     !address ||
     !email ||
@@ -118,7 +112,6 @@ router.put("/clients/:id", async (req, res) => {
       {
         FederalId,
         StateId,
-        CompanyName,
         clientName,
         address,
         email,
