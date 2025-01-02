@@ -46,7 +46,6 @@ router.post("/users", async (req, res) => {
     return res.status(400).json({ error: "All fields including fileType are required" });
   }
 
-  // Ensure clientName is always an array
   const normalizedClientName = Array.isArray(clientName) ? clientName : [clientName];
 
   const newUser = new User({
@@ -78,7 +77,6 @@ router.put("/users/:id", async (req, res) => {
     return res.status(400).json({ error: "All fields except password are required" });
   }
 
-  // Ensure clientName is always an array
   const normalizedClientName = Array.isArray(clientName) ? clientName : [clientName];
 
   let updatedFields = {
@@ -152,7 +150,7 @@ router.post("/login", async (req, res) => {
         Name: userFound.Name,
         username: userFound.username,
         userType: userFound.userType.userType,
-        clientName: userFound.clientName.map(client => client.clientName), // Map for array
+        clientName: userFound.clientName.map(client => client.clientName),
         fileType: userFound.fileType.map(file => file.fileType),
       },
       "user",

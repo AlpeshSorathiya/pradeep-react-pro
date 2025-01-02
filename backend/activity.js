@@ -1,36 +1,60 @@
-const mongoose = require('mongoose');
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
 
-
-
+// Define the schema directly in the route file
 const activitySchema = new mongoose.Schema({
-  clientName: { type: mongoose.Schema.Types.ObjectId, ref: 'Client', required: true },
-  username: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  fileId: { type: mongoose.Schema.Types.ObjectId, ref: 'File', required: true },
-  fileName: { type: String, required: true },
-  activityType: { type: String, enum: ['Login', 'Download'], required: true },
-  timestamp: { type: Date, default: Date.now },
+  userName: { type: String, required: true },
+  downloadedFiles: [
+    {
+      clientName: { type: String, required: true },
+      fileName: { type: String, required: true },
+      downloadTime: { type: Date, default: Date.now },
+    },
+  ],
 });
 
-module.exports = mongoose.model('Activity', activitySchema);
+// Create the Activity model based on the schema
+const Activity = mongoose.model('Activity', activitySchema);
 
-// Log file download activity
-router.post('/log', async (req, res) => {
-  const { clientId, userId, fileId, fileName, activityType } = req.body;
+// Log login activity
+router.post('/log/login', async (req, res) => {
+  const { userName } = req.body;
 
   try {
-    const newActivity = await Activity.create({
-      clientId,
-      userId,
-      fileId,
-      fileName,
-      activityType,
-    });
+    // Check if a log already exists for this session
+    let activity = await Activity.findOne({ userName });
 
-    res.status(201).json({ message: 'Activity logged successfully', newActivity });
+    if (!activity) {
+      // Create a new log if none exists
+      activity = await Activity.create({ userName });
+    }
+
+    res.status(201).json({ message: 'Login activity logged', activity });
   } catch (error) {
-    res.status(500).json({ message: 'Error logging activity', error });
+    res.status(500).json({ message: 'Error logging login activity', error });
+  }
+});
+
+// Log file download activity
+router.post('/log/download', async (req, res) => {
+  const { clientName, userName, fileName } = req.body;
+
+  try {
+    // Find the activity for the user and client
+    const activity = await Activity.findOne({ userName });
+
+    if (!activity) {
+      return res.status(404).json({ message: 'No active session found for this user' });
+    }
+
+    // Append file download details
+    activity.downloadedFiles.push({ clientName,fileName, downloadTime: new Date() });
+    await activity.save();
+
+    res.status(201).json({ message: 'Download activity logged', activity });
+  } catch (error) {
+    res.status(500).json({ message: 'Error logging download activity', error });
   }
 });
 
@@ -38,25 +62,19 @@ router.post('/log', async (req, res) => {
 router.get('/all', async (req, res) => {
   try {
     const activities = await Activity.find()
-      .populate('clientName')
-      .populate('username')
-      .populate('fileId', 'fileName')
-      .sort({ timestamp: -1 });
-
-    res.status(200).json(activities);
+      .sort({ loginTime: -1 });
+      res.json(activities)
   } catch (error) {
     res.status(500).json({ message: 'Error fetching activity logs', error });
   }
 });
 
 // Fetch user-specific activity logs (Client side)
-router.get('/user/:userId', async (req, res) => {
+router.get('/user/:userName', async (req, res) => {
   try {
-    const { userId } = req.params;
-
-    const activities = await Activity.find({ userId })
-      .populate('fileId', 'fileName')
-      .sort({ timestamp: -1 });
+    const activities = await Activity.find({ userName: req.params.userName })
+      .populate('fileName')
+      .sort({ loginTime: -1 });
 
     res.status(200).json(activities);
   } catch (error) {

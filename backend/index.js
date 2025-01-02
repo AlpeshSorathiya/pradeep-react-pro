@@ -1,3 +1,4 @@
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -40,8 +41,9 @@ const userTypeRoutes = require("./usertype");
 const clientRoutes = require("./clients");
 const userRoutes = require("./users");
 const fileUploadRoutes = require("./fileupload");
-const docsRoutes=require("./companydoc")
-const activityRoutes=require("./activity")
+const docsRoutes=require("./companydoc");
+const path = require("path");
+const activityRoutes=require("./activity");
 
 app.use("/api", fileTypeRoutes);
 app.use("/api", userTypeRoutes);
@@ -51,8 +53,15 @@ app.use("/api", fileUploadRoutes);
 app.use("/api", docsRoutes);
 app.use("/api",activityRoutes);
 
+
+app.use(express.static(path.join(__dirname, "../Frontend/build")));
+app.get("*", (req, res) =>
+  res.sendFile(path.join(__dirname, "../Frontend/build/index.html"))
+);
+
+
 // Server port
-const PORT = 3000;
+const PORT = 8020;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
